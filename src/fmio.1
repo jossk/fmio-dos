@@ -1,0 +1,531 @@
+.\"
+.\" $Id$
+.\"
+.\" Copyright (c) 2000 - 2002 Vladimir Popov <jumbo@narod.ru>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd November 20, 2000
+.Dt fmio 1
+.Os
+.Sh NAME
+.Nm fmio
+.Nd small utility to manipulate fm radio card
+.Sh SYNOPSIS
+.Nm fmio
+.Op Fl d Ar driver
+.Op Fl f Ar freq
+.Op Fl i
+.Op Fl m
+.Op Fl s
+.Op Fl v Ar vol
+.Op Fl x Ar vol
+.Op Fl X Ar vol
+.Nm fmio
+.Op Fl d Ar driver
+.Fl S
+.Op Fl c Ar count
+.Op Fl l Ar begin
+.Op Fl h Ar end
+.Nm fmio
+.Op Fl d Ar driver
+.Fl W Ar frequency
+.Nm fmio
+.Fl D
+.Sh DESCRIPTION
+The
+.Nm
+is a small program to set and change fm radio card parameters.
+.Pp
+It sets frequency, volume of a card, reports signal strength on
+the working frequency and can set a radio card output to mono
+provided that the card driver supports it.
+.Pp
+The
+.Nm
+has two additional modes - scanning and detection.
+In the scan mode
+.Nm
+scans frequency range with step 10 kHz and outputs measured signal strength.
+Frequency range and number of probes for each frequency are configurable.
+In the detection mode
+.Nm
+detects any supported radio card.
+Use this mode if you are not sure which card you have or do not know which
+port your card uses.
+.Pp
+Also, it can control the output volume of a sound card through
+.Pa /dev/mixer .
+.Pp
+The options are as follows:
+.Bl -tag -width "-m "
+.It Fl d Ar driver
+Use driver
+.Ar driver .
+See list of currently known drivers in section
+.Sx DRIVERS .
+If no driver was specified, default one will be used.
+.It Fl f Ar freq
+Set fm card frequency
+.Pq in MHz .
+.It Fl i
+Show all available information about a driver and a card.
+.It Fl m
+Set output of a card to mono.
+Works only in conjunction with option
+.Fl f .
+Note, that not all drivers support this option.
+.It Fl s
+Show current signal status of a radio card.
+.It Fl v Ar volume
+Set volume of a card.
+Option
+.Fl v Ar 0
+will mute a card.
+Each driver has its own maximal volume.
+.It Fl x Ar volume
+Set volume of an arbitrary mixer line of a sound card thru
+.Pa /dev/mixer .
+The
+.Ar volume
+has following format:
+.Pp
+.Dl <line name>=[+-]<left channel>,[+-]<right channel>.
+.Pp
+For the line names see
+.Dl under OpenBSD and NetBSD: Pa /usr/include/sys/audioio.h
+.Dl under Linux and FreeBSD: Pa /usr/include/sys/soundcard.h
+.Pp
+Some examples of the option
+.Fl x
+usage are in the section
+.Sx EXAMPLES
+below.
+.It Fl X Ar volume
+Set volume of the sound card master output through
+.Pa /dev/mixer .
+Format of this option is similar to option
+.Fl x ,
+except there is no need to specify <line name>.
+.It Fl D
+Detection mode. All known cards will be probed and results will be printed to
+standard output.
+Note, this procedure is very slow.
+.It Fl S
+Scan mode.
+If some of the listed below parameters were not specified the FM maximal and
+minimal frequencies are used.
+Measured data is dumped to standard output.
+.It Fl l Ar begin
+Lower border of scan range
+.Pq in MHz .
+If it is less than the FM minimal frequency
+.Pq 87.5 MHz ,
+it is set to the FM minimal frequency.
+.It Fl h Ar end
+Upper border of scan range
+.Pq in MHz .
+If it is greater than the FM maximal frequency
+.Pq 108.0 MHz ,
+it is set to the FM maximal frequency.
+.It Fl c Ar count
+Number of probes for each frequency.
+The higher this number is the more precise will be results.
+Since stereo signal has weight 3, none - weight 0 and mono is in between,
+the strongest signal will have value 3 * 
+.Ar count .
+If not set, each frequency will be probed only once.
+.It Fl W Ar frequency
+Search mode.
+Nearest to
+.Ar frequency
+station is searched and, if found, tuned to.
+The search direction is determined by
+.Ar frequency
+sign.
+If
+.Ar frequency
+has negative value, the station is searched downward.
+If
+.Ar frequency
+is positive the search is performed upward.
+.El
+.Sh DRIVERS
+.Pp
+.Em Aztech/PackardBell FM Radio Card
+.Pq ISA
+.Ql az
+.Dl port 0x350 - az1
+.Dl port 0x358 - az2
+.Dl Volume - 0 .. 3
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em Brooktree Bt848 Driver
+.Ql bktr
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Software search
+.Dl Use with Nm bktrctl
+.Pp
+.Em BMC FM Radio Card
+.Pq ISA
+.Ql bmc
+.Dl port 0x20F - bmc1
+.Dl port 0x30F - bmc2
+.Dl Volume - 0 .. 15
+.Dl Can set mono - yes
+.Dl Search not implemented yet
+.Pp
+.Em BSD Radio Driver
+.Ql br
+.Dl Volume - 0 .. 255
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em EcoRadio Card
+.Pq ISA
+.Ql er
+.Dl port 0x316 - er1
+.Dl port 0x336 - er2
+.Dl Volume - 0 .. 3
+.Dl Can set mono - no
+.Dl Search not implemented yet
+.Dl Detection not implemented yet
+.Pp
+.Em Gemtek FM Radio Card
+.Pq ISA
+.Ql gti
+.Dl port 0x20c - gti1
+.Dl port 0x30c - gti2
+.Dl port 0x24c - gti3
+.Dl port 0x34c - gti4
+.Dl port 0x248 - gti5
+.Dl Volume - 0 .. 1
+.Dl Can set mono - no
+.Dl Software search
+.Pp
+.Em Gemtek FM Radio Card
+.Pq PCI
+.Ql gtp
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em AIMS Lab Highway Xtreme TV card
+.Em with FM tuner Driver
+.Ql hx
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Software search
+.Dl BSD only
+.Dl Use with Nm bktrctl
+.Dl Needs kernel with Ql option BT848_GPIO_ACCESS
+.Pp
+.Em Guillemot MaxiRadio FM 2000 Radio Card
+.Pq PCI
+.Ql mr
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em AIMS Lab RadioTrack/RadioReveal RA300 FM Radio Card
+.Pq ISA
+.Ql rt
+.Dl port 0x20c - rt1
+.Dl port 0x30c - rt2
+.Dl Volume - 0 .. 10
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em AIMS Lab RadioTrack II FM Radio Card
+.Pq ISA
+.Ql rtII
+.Dl port 0x20c - rtII1
+.Dl port 0x30c - rtII2
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em SoundForte Awesome 64R SF64-PCE2 Driver
+.Pq PCI
+.Ql sae
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware Search
+.Pp
+.Em SoundForte Legacy 128 SF16-FMD2 Driver
+.Pq ISA
+.Ql sf2d
+.Dl port 0x284 - sf2d1
+.Dl port 0x384 - sf2d2
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Search not implemented yet
+.Dl Detection not implemented yet
+.Pp
+.Em SoundForte RadioX SF16-FMI Driver
+.Pq ISAPNP
+.Ql sfi
+.Dl Also known as Creative ViBRA 16c PnP
+.Dl port 0x284 - sfi1
+.Dl port 0x384 - sfi2
+.Dl Volume - 0 .. 1
+.Dl Can set mono - no
+.Dl Search not implemented yet
+.Dl Detection not implemented yet
+.Pp
+.Em SoundForte RadioLink SF16-FMR FM Radio Card
+.Pq ISA
+.Ql sfr
+.Dl port 0x284 - sfr1
+.Dl port 0x384 - sfr2
+.Dl Volume - 0 .. 15
+.Dl Can set mono - no
+.Dl Use with Nm fmrinit
+.Dl Search not implemented yet
+.Pp
+.Em SoundForte RadioLink SF16-FMR2 FM Radio Card
+.Pq ISA
+.Ql sf2r
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em SoundForte RadioLink SF64-PCR FM Radio Card
+.Pq PCI
+.Ql sf4r
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em Spase PCRadio Card
+.Pq ISA
+.Ql sp
+.Dl port 0x1b0 - sp1
+.Dl port 0x1f0 - sp2
+.Dl port 0x278 - sp3
+.Dl port 0x378 - sp4
+.Dl port 0x2f8 - sp5
+.Dl port 0x3bc - sp6
+.Dl Volume - 0 .. 63
+.Dl Can set mono - yes 
+.Dl Search not implemented yet
+.Pp
+.Em SoundForte Quad X-treme SF256-PCP-R Driver
+.Pq PCI
+.Ql sqx
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em SoundForte Theatre X-treme 5.1 SF256-PCS-R Driver
+.Pq PCI
+.Ql stx
+.Dl Volume - 0 .. 1
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em Sound Vision 16 Gold Sound Card with FM Radio
+.Pq ISA
+.Ql svg
+.Dl Volume - 0 .. 1
+.Dl Can set mono - no
+.Dl Software search
+.Pp
+.Em Trust FM Radio Card
+.Pq ISA
+.Ql tr
+.Dl Volume - 0 .. 63
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em Terratec FM Radio Card
+.Pq ISAPNP
+.Ql tt
+.Dl Volume - 0 .. 7
+.Dl Can set mono - yes
+.Dl Hardware search
+.Pp
+.Em Video4Linux Driver
+.Ql v4l
+.Dl Volume - 0 .. 10
+.Dl Can set mono - yes
+.Dl Software search
+.Pp
+.Em Zoltrix RadioPlus 108 FM Radio Card
+.Pq ISA
+.Ql zx
+.Dl port 0x20c - zx1
+.Dl port 0x30c - zx2
+.Dl Volume - 0 .. 16
+.Dl Can set mono - yes
+.Dl Software search
+.Sh EXAMPLES
+.Bl -item
+.It
+Set frequency to 104.5 MHz:
+.Bd -literal -offset indent
+# fmio -f 104.5
+.Ed
+.It
+Set frequency to 104.5 MHz and show signal state on this frequency:
+.Bd -literal -offset indent
+# fmio -f 104.5 -s
+.Ed
+.It
+Set frequency to 104.5 MHz, hardware volume to 4:
+.Bd -literal -offset indent
+# fmio -v 4 -f 104.5
+.Ed
+.It
+Set volume of both channels of line input to 9:
+.Bd -literal -offset indent
+# fmio -x line=9
+.Ed
+.It
+For line1, increase volume of left channel by 2, set volume of right channel
+to 10:
+.Bd -literal -offset indent
+# fmio -x line1=+2,10
+.Ed
+.It
+For master output, increase volume of left channel by 2 and decrease volume
+of right channel by 1:
+.Bd -literal -offset indent
+# fmio -X +2,-1
+.Ed
+.It
+Decrease volume of both channels by 2:
+.Bd -literal -offset indent
+# fmio -X -2
+.Ed
+.It
+Scan range [100.0...107.6] using driver
+.Sq bktr :
+.Bd -literal -offset indent
+# fmio -d bktr -S -l 100.0 -h 107.6
+.Ed
+.It
+Search station below 104.3 MHz using driver
+.Sq sf2r :
+.Bd -literal -offset indent
+# fmio -d sf2r -W -104.3
+.Ed
+.It
+Detect all available cards:
+.Bd -literal -offset indent
+# fmio -D
+.Ed
+.El
+.Sh FILES
+.Bl -tag -width /dev/mixer
+.It Pa /dev/mixer
+mixer audio device
+.It Pa /dev/tuner
+radio tuner device used by the
+.Bx
+bktr driver.
+.It Pa /dev/radio
+radio tuner device used by 
+.Ql v4l
+driver
+.Pq Linux
+and
+.Ql br
+driver
+.Pq OpenBSD and NetBSD
+.El
+.Sh ENVIROMENT
+The following environment variables affect the execution of
+.Nm fmio :
+.Bl -tag -width FMTUNER
+.It Ev FMTUNER
+The driver that should be used as default.
+.It Ev RADIODEVICE
+The radio tuner device
+.Pq OpenBSD, NetBSD and Linux .
+.It Ev MIXERDEVICE
+The audio mixer device to use.
+.El
+.Sh BUGS
+.Pp
+Frequency and hardware volume should be absolute.
+They cannot be increased or decreased relatively to the current value.
+.Pp
+The Gemtek PCI card implementation has some flaw.
+Namely, when turning a card off, don't use option 
+.Fl f .
+.Pp
+The SF16-FMR card has 16 volume levels.
+Thus,
+.Ic fmio -f 104.5
+can be easily taken in as
+.Ic fmio -v 0 .
+Use some volume level when setting up a frequency.
+Also, this card has to be initialized during bootup.
+Launch
+.Nm fmrinit
+from some start script
+.Pq most likely Pa /etc/rc.local .
+.Pp
+There's a flaw in the
+.Bx
+bktr driver - after closing
+.Pa /dev/tuner
+a card is turned off too.
+Thus, you cannot use
+.Nm
+alone to manage bktr cards because
+.Nm
+opens
+.Pa /dev/tuner ,
+tunes a card to some frequency and closes
+.Pa /dev/tuner
+- and a card is turned off.
+Since
+.Nm
+cannot hold
+.Pa /dev/tuner
+open all the time, use it with
+.Nm bktrctl .
+The same concerns Linux users.
+Some cards supported by kernel are turned off after closing
+.Pa /dev/radio
+.Pq e.g. Tn USB tuners .
+Use
+.Nm
+with
+.Nm bktrctl .
+.Pp
+Due to the above limitation the
+.Bx
+bktr driver cannot work correctly if
+frequency was not specified.
+E.g.
+.Ic fmio -d bktr -i
+will not work as expected.
+Correct use is
+.Ic fmio -d bktr -f <some freq> -i .
+.Sh AUTHOR
+Vladimir Popov
+.Aq jumbo@narod.ru
